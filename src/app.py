@@ -51,7 +51,7 @@ def handle_personajes():
 
 
 #obteniendo info de un solo personaje
-@app.route('/personajes/<int:user_id>', methods=['GET'])
+@app.route('/personajes/<int:usuario_id>', methods=['GET'])
 def get_info_personajes(personajes_id):
     
     personajes = Personajes.query.filter_by(id=personajes_id).first()
@@ -90,8 +90,8 @@ def handle_usuario():
 
 
 #obteniendo info de un solo usuario
-@app.route('/usurio/<int:user_id>', methods=['GET'])
-def get_info_user(usuario_id):
+@app.route('/usurio/<int:usuario_id>', methods=['GET'])
+def get_info_usuario(usuario_id):
     
     usuario = Usuario.query.filter_by(id=usuario_id).first()
     return jsonify(usuario.serialize()), 200
@@ -117,14 +117,61 @@ def get_favoritos_usuario(usuario_id):
     print(results)
     return jsonify(results), 200
 
+# POSTs
+@app.route('/usuario/<int:usuario_id>/favoritos/planetas', methods=['POST'])
+def add_new_favourite_planet(usuario_id):
+    request_body = request.json
+    print(request_body)
+    print(usuario_id)
+    new_favorito = Favoritos(usuario_id=usuario_id, planetas_id=request_body["planetas_id"])
+    db.session.add(new_favorito)
+    db.session.commit()
+    usuario = Favoritos.query.filter_by(usuario_id=usuario_id).first()
+    print(usuario)
+    return jsonify(request_body),200
 
-# POST:
+@app.route('/usuario/<int:usuario_id>/favoritos/personajes', methods=['POST'])
+def add_new_favourite_personajes(usuario_id):
+    request_body = request.json
+    print(request_body)
+    print(usuario_id)
+    new_favorito = Favoritos(usuario_id=usuario_id, personajes_id=request_body["personajes_id"])
+    db.session.add(new_favorito)
+    db.session.commit()
+    usuario = Favoritos.query.filter_by(usuario_id=usuario_id).first()
+    print(usuario)
+    return jsonify(request_body),200
 
-@app.route('/favorite/planet/<int:planet_id>', methods=['POST'])
-def add_new_todo(usuario_id,planetas_id):
-    añadir_planetas_a_favoritos = Favoritos.query.filter_by(planetas_id=planetas_id).first().all()
-    results = list(map(lambda item: item.serialize(),añadir_planetas_a_favoritos))
-    return jsonify(results)
+
+# DELETEs
+
+@app.route('/usuario/<int:usuario_id>/favoritos/planetas', methods=['DELETE'])
+def eliminar_planeta_favorito(usuario_id):
+    request_body=request.json
+    print(request_body)
+    print(usuario_id)
+    query= Favoritos.query.filter_by(usuario_id=usuario_id,planetas_id=request_body["planeta_id"]).first()
+    print(query)
+    if query is None:
+        return jsonify({"msg":"No hubo coincidencias, no hay nada para eliminar"}),404
+    db.session.delete(query)
+    db.session.commit() 
+    return jsonify({"msg":"El favorito ha sido eliminado correctamente"}),200
+    
+
+@app.route('/usuario/<int:usuario_id>/favoritos/personajes', methods=['DELETE'])
+def eliminar_personajes_favorito(usuario_id):
+    request_body=request.json
+    print(request_body)
+    print(usuario_id)
+    query= Favoritos.query.filter_by(usuario_id=usuario_id,personajes_id=request_body["personajes_id"]).first()
+    print(query)
+    if query is None:
+        return jsonify({"msg":"No hubo coincidencias, no hay nada para eliminar"}),404
+    db.session.delete(query)
+    db.session.commit() 
+    return jsonify({"msg":"El favorito ha sido eliminado correctamente"}),200
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
