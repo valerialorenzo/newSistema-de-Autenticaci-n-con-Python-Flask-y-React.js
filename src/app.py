@@ -157,7 +157,7 @@ def eliminar_planeta_favorito(usuario_id):
     db.session.delete(query)
     db.session.commit() 
     return jsonify({"msg":"El favorito ha sido eliminado correctamente"}),200
-    
+    # segundo delete
 
 @app.route('/usuario/<int:usuario_id>/favoritos/personajes', methods=['DELETE'])
 def eliminar_personajes_favorito(usuario_id):
