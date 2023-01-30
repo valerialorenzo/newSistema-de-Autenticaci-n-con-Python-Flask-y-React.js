@@ -24,7 +24,7 @@ db = SQLAlchemy()
 class Usuario(db.Model):
     id= db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(250))
-    constraseña= db.Column (db.String (20))
+    contraseña= db.Column (db.String (20))
     mail= db.Column (db.String (100))
     favoritos_usuario = db.relationship('Favoritos', backref='usuario', lazy=True)
 

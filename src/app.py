@@ -173,6 +173,23 @@ def eliminar_personajes_favorito(usuario_id):
     return jsonify({"msg":"El favorito ha sido eliminado correctamente"}),200
 
 
+# ________
+
+@app.route('/register', methods=['POST'])
+def add_new_user():
+    request_body=request.json
+    mail= request_body ["mail"]
+    contraseña= request_body ["contraseña"]
+    nombre= request_body ["nombre"]
+    # print(request_body)
+    new_user=Usuario(mail=mail, contraseña=contraseña, nombre= nombre)
+    db.session.add(new_user)
+    db.session.commit() 
+    allusers=Usuario.query.all()
+    results= list(map(lambda item: item.serialize(),allusers))
+    return jsonify(results), 200
+
+
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
