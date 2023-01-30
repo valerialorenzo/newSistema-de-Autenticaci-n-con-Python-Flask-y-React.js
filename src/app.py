@@ -9,6 +9,7 @@ from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
 from models import db, Usuario, Vehiculos, Planetas, Personajes, Favoritos
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
 
 
 # ACA ARRIBA IMPORTE LOS DEMAS QUE FALTABAN
@@ -29,6 +30,9 @@ MIGRATE = Migrate(app, db)
 db.init_app(app)
 CORS(app)
 setup_admin(app)
+
+app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this!
+jwt = JWTManager(app)
 
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
@@ -177,18 +181,44 @@ def eliminar_personajes_favorito(usuario_id):
 
 @app.route('/register', methods=['POST'])
 def add_new_user():
-    request_body=request.json
-    mail= request_body ["mail"]
-    contraseña= request_body ["contraseña"]
-    nombre= request_body ["nombre"]
-    # print(request_body)
-    new_user=Usuario(mail=mail, contraseña=contraseña, nombre= nombre)
-    db.session.add(new_user)
-    db.session.commit() 
-    allusers=Usuario.query.all()
-    results= list(map(lambda item: item.serialize(),allusers))
-    return jsonify(results), 200
 
+    request_body=request.json
+
+    usuario=Usuario.query.filter_by(mail =request_body ["mail"]).first() 
+
+    if usuario is None:
+        new_user= Usuario (mail =request_body ["mail"], contraseña= request_body ["contraseña"], nombre= request_body ["nombre"])
+        db.session.add(new_user)
+        db.session.commit() 
+
+        return jsonify({"usuario":new_user.serialize()}), 200
+    return jsonify ("usuario existente"), 400
+
+
+@app.route("/login", methods=["POST"])
+def login():
+
+    mail=request.json.get("mail",None)
+    contraseña=request.json.get("contraseña",None)
+
+    usuario= Usuario.query.filter_by(mail=mail).first()
+    if usuario is None: 
+        return jsonify({"msg":"Usuario inexistente"}), 404
+    if contraseña != usuario.contraseña:
+        return jsonify({"msg":"Usuario o contraseña incorrecto"}), 401
+
+    access_token = create_access_token(identity=mail)
+    return jsonify(access_token=access_token)
+    # return jsonify({"msg":"Usuario o contraseña incorrecto"}), 401
+    
+# Protect a route with jwt_required, which will kick out requests
+# without a valid JWT present.
+@app.route("/protected", methods=["GET"])
+@jwt_required()
+def protected():
+    # Access the identity of the current user with get_jwt_identity
+    current_user = get_jwt_identity()
+    return jsonify(logged_in_as=current_user), 200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
